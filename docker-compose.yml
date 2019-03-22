@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+  ecs:
+    build: .
+    image: smithmicro/ecs:latest
+    volumes:
+      - $PWD:/deploy
+    environment: 
+      - CLUSTER=
+      - PROJECT_NAME=
+      - VPC_ID=
+      - SECURITY_GROUP=
+      - CERTIFICATE_ARN=
+      - TARGET_GROUP_ARN=
+      - INSTANCE_TYPE=
+      - KEY_NAME=
+      - AWS_DEFAULT_REGION=
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
