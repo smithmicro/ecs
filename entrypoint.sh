@@ -1,6 +1,12 @@
 #!/bin/bash
 #
 
+# optional variables
+
+if [ "$COMPOSE" == '' ]; then
+  COMPOSE=docker-compose.yml
+fi
+
 function requireRegion()
 {
   # check all required variables
@@ -75,10 +81,6 @@ if [ "$1" = 'up' ]; then
   requireCluster
   requireProjectName
 
-  if [ "$COMPOSE" == '' ]; then
-    COMPOSE=docker-compose.yml
-  fi
-
   # Start the service
   exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups
 fi
@@ -87,10 +89,6 @@ fi
 if [ "$1" = 'update' ]; then
   requireCluster
   requireProjectName
-
-  if [ "$COMPOSE" == '' ]; then
-    COMPOSE=docker-compose.yml
-  fi
 
   # Start the service
   ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service down --cluster $CLUSTER
@@ -116,7 +114,7 @@ if [ "$1" = 'up-elb' ]; then
   fi
 
   # Start the service
-  exec ecs-cli compose --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups \
+  exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups \
     --target-group-arn $TARGET_GROUP_ARN --container-name $CONTAINER_NAME --container-port $CONTAINER_PORT
 fi
 
@@ -138,10 +136,6 @@ if [ "$1" = 'update-elb' ]; then
     CONTAINER_PORT=8080
   fi
 
-  if [ "$COMPOSE" == '' ]; then
-    COMPOSE=docker-compose.yml
-  fi
-
   # Start the service
   ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service down --cluster $CLUSTER
   exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups \
@@ -156,8 +150,9 @@ fi
 if [ "$1" = 'down' ]; then
   requireCluster
   requireProjectName
+
   # Service down
-  exec ecs-cli compose --project-name $PROJECT_NAME service down --cluster $CLUSTER
+  exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service down --cluster $CLUSTER
 fi
 
 if [ "$1" = 'version' ]; then
