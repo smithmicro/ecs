@@ -41,6 +41,7 @@ if [ "$1" = 'help' ]; then
   echo "  create-elb      - Create an Elastic Load Balancer for HTTPS"
   echo "  create-cluster  - Create an ECS Cluster with ECS Instances"
   echo "  login           - Output a string to log into Elastic Container Registry (ECS)"
+  echo "  schedule-task   - Create an ECS Task that runs on a CRON schedule"
   echo "  up              - Perform a Compose Up"
   echo "  update          - Perform a Compose Down then Up"
   echo "  up-elb          - Perform a Compose Up using an ELB"
@@ -74,6 +75,13 @@ fi
 
 if [ "$1" = 'create-elb' ]; then
   exec create-elb.sh
+fi
+
+if [ "$1" = 'schedule-task' ]; then
+  requireCluster
+  requireProjectName
+
+  exec schedule-task.sh
 fi
 
 # Deploy
