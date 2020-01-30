@@ -31,13 +31,9 @@ if [ "$ECS_ROLE_ARN" == '' ]; then
   exit 1
 fi
 
-# "ecs-cli compose create" does not support the --project-name flag
-# Use the COMPOSE_PROJECT_NAME environment variable instead
-export COMPOSE_PROJECT_NAME=$PROJECT_NAME
-
 # Step 2 - Create or Update our Task Definition
-ecs-cli compose --file $COMPOSE create --cluster $CLUSTER --create-log-groups
-TASK_ARN=$(aws ecs describe-task-definition --task-definition $CLUSTER --query 'taskDefinition.taskDefinitionArn' --output text)
+ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME create --cluster $CLUSTER --create-log-groups
+TASK_ARN=$(aws ecs describe-task-definition --task-definition $PROJECT_NAME --query 'taskDefinition.taskDefinitionArn' --output text)
 echo "TaskDefinitionArn: $TASK_ARN"
 
 # Step 3 - Create a Rule

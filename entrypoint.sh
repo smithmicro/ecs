@@ -40,6 +40,7 @@ if [ "$1" = 'help' ]; then
   echo "Commands:"
   echo "  create-elb      - Create an Elastic Load Balancer for HTTPS"
   echo "  create-cluster  - Create an ECS Cluster with ECS Instances"
+  echo "  create-fargate  - Create a Fargate Cluster"
   echo "  login           - Output a string to log into Elastic Container Registry (ECS)"
   echo "  schedule-task   - Create an ECS Task that runs on a CRON schedule"
   echo "  up              - Perform a Compose Up"

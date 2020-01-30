@@ -6,6 +6,7 @@ A handy Elastic Container Services Toolkit in a Docker Image
 |---|---|
 |create-elb      | Create an Elastic Load Balancer for HTTPS|
 |create-cluster  | Create an ECS Cluster with EC2 instances|
+|create-fargate  | Create a Fargate Cluster|
 |login           | Output a string to log into Elastic Container Registry (ECS)|
 |schedule-task   | Create an ECS Task that runs on a CRON schedule|
 |up              | Perform a Compose Up|
@@ -48,8 +49,8 @@ The following varaiables are used by the Docker image to perform various operati
 |COMPOSE|docker-compose.yml|schedule-task, up, update, up-elb, update-elb||
 |TARGET_GROUP_ARN||up-elb, update-elb||
 |CONTAINER_PORT|8080|up-elb, update-elb|Port inside the Container to connect to ELB|
-|SCHEDULE_HOUR|0|Hour to run the job daily.  Can use CRON_EXPRESSION if you want to customize|
-|CRON_EXPRESSION|cron(0 0 * * ? *)|CRON Expression for ECS Task - Default: Daily at midnight|
+|SCHEDULE_HOUR|0|schedule-task|Hour (UTC) to run the job daily.  Use CRON_EXPRESSION if you want to customize further.|
+|CRON_EXPRESSION|cron(0 0 * * ? *)|schedule-task|CRON Expression for ECS Task - Default: Daily at midnight UTC|
 
 ## Future Development
 CodeDeploy and Blue/Green deployments are under development.

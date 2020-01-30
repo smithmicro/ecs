@@ -8,7 +8,7 @@ if [ "$KEY_NAME" == '' ]; then
   exit 1
 fi
 if [ "$SECURITY_GROUP" == '' ]; then
-  echo "Please set a SECURITY_GROUP that allows port 80/udp from all ports (e.g. sg-12345678)"
+  echo "Please set a SECURITY_GROUP from your VPC (e.g. sg-12345678)"
   exit 2
 fi
 if [ "$VPC_ID" == '' ]; then
@@ -37,7 +37,7 @@ ECS_ROLE_ID=$(aws iam get-role --role-name ecsInstanceRole --query 'Role.[RoleId
 if [ "$ECS_ROLE_ID" == '' ]; then
   echo "You must create the 'ecsInstanceRole' as outlined by this article:"
   echo "http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
-  exit 1
+  exit 10
 fi
 
 # Step 2 - Create our ECS Cluster with INSTANCE_COUNT instances
