@@ -1,4 +1,4 @@
-FROM alpine:3.10
+FROM debian:buster-slim
 
 LABEL maintainer="David Sperling <dsperling@smithmicro.com>"
 
@@ -7,16 +7,18 @@ ENV AWS_ACCESS_KEY_ID=
 ENV AWS_SECRET_ACCESS_KEY=
 ENV AWS_DEFAULT_REGION=
 
-# Install the AWS and ECS CLI
-RUN apk add --update --no-cache \
-    bash \
-    ca-certificates \
-    python \
-    py-pip \
- && pip install \
-    awscli \
- && wget -O /usr/local/bin/ecs-cli -q https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest \
- && chmod +x /usr/local/bin/ecs-cli
+# Install AWS CLI 2.x, ECS CLI 1.x and print their versions
+RUN apt-get -y update && apt-get -y install \
+    curl \
+    unzip \
+ && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+ && unzip awscliv2.zip \
+ && ./aws/install \
+ && rm awscliv2.zip \
+ && curl -Lo /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest \
+ && chmod +x /usr/local/bin/ecs-cli \
+ && aws --version \
+ && ecs-cli --version
 
 COPY *.sh /usr/local/bin/
 
