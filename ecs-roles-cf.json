@@ -1,0 +1,75 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Create ECS Roles required by smithmicro/ecs",
+    "Resources": {
+        "ecsParameterStorePolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "ecsParameterStorePolicy",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "ssm:GetParameters"
+                            ],
+                            "Resource": [
+                                "arn:aws:ssm:*:*:parameter/*"
+                            ]
+                        }
+                    ]
+                },
+                "Roles": [
+                    {
+                        "Ref": "ecsTaskExecutionRole"
+                    }
+                ]
+            }
+        },
+        "ecsTaskExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "ecsTaskExecutionRole",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+                ]
+            }
+        },
+        "ecsEventsRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "ecsEventsRole",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "events.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceEventsRole"
+                ]
+            }
+        }
+    }
+}

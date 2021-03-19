@@ -6,6 +6,7 @@ LABEL maintainer="David Sperling <dsperling@smithmicro.com>"
 ENV AWS_ACCESS_KEY_ID=
 ENV AWS_SECRET_ACCESS_KEY=
 ENV AWS_DEFAULT_REGION=
+ENV ECS_PARAMS=
 
 # Install AWS CLI 2.x, ECS CLI 1.x and print their versions
 RUN apt-get -y update && apt-get -y install \
@@ -20,7 +21,10 @@ RUN apt-get -y update && apt-get -y install \
  && aws --version \
  && ecs-cli --version
 
+ENV ECS_CONFIG_DIR=/etc/ecs
+
 COPY *.sh /usr/local/bin/
+COPY *.json $ECS_CONFIG_DIR/
 
 VOLUME /deploy
 

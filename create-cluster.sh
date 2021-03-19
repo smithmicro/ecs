@@ -20,7 +20,7 @@ if [ "$CLUSTER" == '' ]; then
   exit 4
 fi
 
-# Check all optional variables
+# Step 1 - Check all optional variables
 if [ "$INSTANCE_TYPE" == '' ]; then
   INSTANCE_TYPE=t3.small
 fi
@@ -29,15 +29,6 @@ if [ "$INSTANCE_COUNT" == '' ]; then
 fi
 if [ "$SUBNET_ID" == '' ]; then
   SUBNET_ID=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC_ID --query 'Subnets[*].[SubnetId]' --output text | tr '\n' ',')
-fi
-
-# Step 1 - Ensure we have the Role name 'ecsInstanceRole' created
-# In most cases, the Amazon ECS instance role is automatically created for you in the console first-run experience.
-ECS_ROLE_ID=$(aws iam get-role --role-name ecsInstanceRole --query 'Role.[RoleId]' --output text | tr -d '\n')
-if [ "$ECS_ROLE_ID" == '' ]; then
-  echo "You must create the 'ecsInstanceRole' as outlined by this article:"
-  echo "http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
-  exit 10
 fi
 
 # Step 2 - Create our ECS Cluster with INSTANCE_COUNT instances

@@ -36,41 +36,49 @@ function requireProjectName()
 
 # Deploy
 if [ "$1" = 'help' ]; then
-
   echo "Commands:"
-  echo "  create-elb      - Create an Elastic Load Balancer for HTTPS"
-  echo "  create-cluster  - Create an ECS Cluster with ECS Instances"
-  echo "  create-fargate  - Create a Fargate Cluster"
-  echo "  login           - Output a string to log into Elastic Container Registry (ECS)"
-  echo "  schedule-task   - Create an ECS Task that runs on a CRON schedule"
-  echo "  up              - Perform a Compose Up"
-  echo "  update          - Perform a Compose Down then Up"
-  echo "  up-elb          - Perform a Compose Up using an ELB"
-  echo "  update-elb      - Perform a Compose Down then Up using an ELB"
-  echo "  down            - Perform a Dompose Down"
-  echo "  ps              - List Containers running in the cluster"
+  echo "  create-cluster     - Create an ECS Cluster with ECS Instances"
+  echo "  create-elb         - Create an Elastic Load Balancer for HTTPS"
+  echo "  create-fargate     - Create a Fargate Cluster"
+  echo "  create-roles       - Create required ECS Roles for the Parameter Store"
+  echo "  destroy-cluster    - Destroys a cluster - proceed with caution"
+  echo "  down               - Perform a Dompose Down"
+  echo "  get-login-password - Get ECR login password for username AWS"
+  echo "  login              - Output a string to log into Elastic Container Registry (ECS)"
+  echo "  ps                 - List Containers running in the cluster"
+  echo "  schedule-task      - Create an ECS Task that runs on a CRON schedule"
+  echo "  up                 - Perform a Compose Up"
+  echo "  update             - Perform a Compose Down then Up"
+  echo "  up-elb             - Perform a Compose Up using an ELB"
+  echo "  update-elb         - Perform a Compose Down then Up using an ELB"
   exit 0
 fi
 
 if [ "$1" = 'login' ]; then
   requireRegion
 
-  ECS_LOGIN=$(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+  ECS_LOGIN=$(aws ecr get-login-password --region $AWS_DEFAULT_REGION)
   # remove the CR at the end of the string
   ECS_LOGIN="${ECS_LOGIN//[$'\r']}"
-  echo -n $ECS_LOGIN
+
+  ACCOUNT_ID=$(aws ecr describe-registry --query 'registryId' --output text)
+  ECR="$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+
+  echo -n "docker login -u AWS -p $ECS_LOGIN https://$ECR"
   exit 0
 fi
 
-if [ "$1" = 'create-cluster' ]; then
-  requireCluster
+if [ "$1" = 'get-login-password' ]; then
+  requireRegion
 
+  exec aws ecr get-login-password --region $AWS_DEFAULT_REGION
+fi
+
+if [ "$1" = 'create-cluster' ]; then
   exec create-cluster.sh
 fi
 
 if [ "$1" = 'create-fargate' ]; then
-  requireCluster
-
   exec create-fargate.sh
 fi
 
@@ -78,111 +86,33 @@ if [ "$1" = 'create-elb' ]; then
   exec create-elb.sh
 fi
 
-if [ "$1" = 'schedule-task' ]; then
+if [ "$1" = 'destroy-cluster' ]; then
   requireCluster
-  requireProjectName
+  requireRegion
 
+  exec ecs-cli down --cluster $CLUSTER --region $AWS_DEFAULT_REGION --force
+fi
+
+if [ "$1" = 'schedule-task' ]; then
   exec schedule-task.sh
 fi
 
 # Deploy
 if [ "$1" = 'up' ]; then
-  requireCluster
-  requireProjectName
-
-  # Start the service
-  exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups
+  exec service-up.sh $1
 fi
 
-# Re-eploy
 if [ "$1" = 'update' ]; then
-  requireCluster
-  requireProjectName
-
-  # Stop the service
-  ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service down --cluster $CLUSTER
-  RETURN_VALUE=$?
-  if [ $RETURN_VALUE -ne 0 ]; then
-      echo "[ecs-cli compose service down] failed with error code: $RETURN_VALUE"
-  fi
-
-  echo "Waiting for the ECS Service to fully drain."
-  while true; do
-    SERVICE_STATUS=$(aws ecs describe-services --services $PROJECT_NAME --cluster $CLUSTER \
-      --query 'services[*].status' --output text)
-    echo "Service status is $SERVICE_STATUS"
-    if [ "$SERVICE_STATUS" == "INACTIVE" ]; then
-      break
-    fi
-    sleep 10
-  done
-
-  # Start the service
-  exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups
+  exec service-up.sh $1
 fi
 
 # Deploy with ELB
 if [ "$1" = 'up-elb' ]; then
-  requireCluster
-  requireProjectName
-
-  if [ "$TARGET_GROUP_ARN" == '' ]; then
-    echo "Please set the TARGET_GROUP_ARN from your ELB"
-    exit 11
-  fi
-  if [ "$CONTAINER_NAME" == '' ]; then
-    echo "Please set veriable CONTAINER_NAME"
-    exit 12
-  fi
-  # check all optional variables
-  if [ "$CONTAINER_PORT" == '' ]; then
-    CONTAINER_PORT=8080
-  fi
-
-  # Start the service
-  exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups \
-    --target-group-arn $TARGET_GROUP_ARN --container-name $CONTAINER_NAME --container-port $CONTAINER_PORT
+  exec service-up.sh $1
 fi
 
-# Re-Deploy with ELB
 if [ "$1" = 'update-elb' ]; then
-  requireCluster
-  requireProjectName
-
-  if [ "$TARGET_GROUP_ARN" == '' ]; then
-    echo "Please set the TARGET_GROUP_ARN from your ELB"
-    exit 11
-  fi
-  if [ "$CONTAINER_NAME" == '' ]; then
-    echo "Please set veriable CONTAINER_NAME"
-    exit 12
-  fi
-  # check all optional variables
-  if [ "$CONTAINER_PORT" == '' ]; then
-    CONTAINER_PORT=8080
-  fi
-
-  # Stop the service
-  ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service down --cluster $CLUSTER
-  RETURN_VALUE=$?
-  if [ $RETURN_VALUE -ne 0 ]; then
-      echo "[ecs-cli compose service down] failed with error code: $RETURN_VALUE"
-  fi
-
-  echo "Waiting for the ECS Service to fully drain."
-  while true; do
-    SERVICE_STATUS=$(aws ecs describe-services --services $PROJECT_NAME --cluster $CLUSTER \
-      --query 'services[*].status' --output text)
-    echo "Service status is $SERVICE_STATUS"
-    if [ "$SERVICE_STATUS" == "INACTIVE" ]; then
-      break
-    fi
-    sleep 10
-  done
-
-  # Start the service
-  exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service up --cluster $CLUSTER --create-log-groups \
-    --target-group-arn $TARGET_GROUP_ARN --container-name $CONTAINER_NAME --container-port $CONTAINER_PORT
+  exec service-up.sh $1
 fi
 
 if [ "$1" = 'ps' ]; then
@@ -198,10 +128,19 @@ if [ "$1" = 'down' ]; then
   exec ecs-cli compose --file $COMPOSE --project-name $PROJECT_NAME service down --cluster $CLUSTER
 fi
 
+if [ "$1" = 'create-roles' ]; then
+  aws cloudformation create-stack --stack-name "ecsRoles" \
+    --template-body file://$ECS_CONFIG_DIR/ecs-roles-cf.json \
+    --capabilities CAPABILITY_NAMED_IAM
+  echo "Waiting for CloudFormation Create Stack to complete..."
+  aws cloudformation wait stack-create-complete --stack-name "ecsRoles"
+  echo "Complete"
+  exit 0
+fi
+
 if [ "$1" = 'version' ]; then
   aws --version
   exec ecs-cli --version
 fi
-
 
 exec "$@"

@@ -23,11 +23,10 @@ fi
 echo "CRON Expression: $CRON_EXPRESSION"
 
 # Step 1 - Ensure we have the Role name 'ecsEventsRole' created
-# In most cases, the Amazon ECS roles are automatically created for you in the console first-run experience.
 ECS_ROLE_ARN=$(aws iam get-role --role-name ecsEventsRole --query 'Role.Arn' --output text)
 if [ "$ECS_ROLE_ARN" == '' ]; then
-  echo "You must create the 'ecsEventsRole' as outlined by this article:"
-  echo "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/CWE_IAM_role.html"
+  echo "You must create the 'ecsEventsRole' as outlined by the README.md."
+  echo "See the section named 'Scheduling Tasks'"
   exit 1
 fi
 

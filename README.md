@@ -3,18 +3,21 @@ A handy Elastic Container Services Toolkit in a Docker Image
 
 ## Functions
 | Function | Action |
-|---|---|
-|create-elb      | Create an Elastic Load Balancer for HTTPS|
+|----------|--------|
 |create-cluster  | Create an ECS Cluster with EC2 instances|
+|create-elb      | Create an Elastic Load Balancer for HTTPS|
 |create-fargate  | Create a Fargate Cluster|
+|create-roles    | Create required ECS Roles for the Parameter Store|
+|destroy-cluster | Destroys a cluster - proceed with caution|
+|down            | Perform a Dompose Down|
+|get-login-password | Get ECR login password for username AWS|
 |login           | Output a string to log into Elastic Container Registry (ECS)|
+|ps              | List Containers running in the cluster|
 |schedule-task   | Create an ECS Task that runs on a CRON schedule|
 |up              | Perform a Compose Up|
 |update          | Perform a Compose Down/Up|
 |up-elb          | Perform a Compose Up using an ELB|
 |update-elb      | Perform a Compose Down/Up using an ELB|
-|down            | Perform a Dompose Down|
-|ps              | List Containers running in the cluster|
 
 ## Example
 To deploy a docker-compose.yml file in the current working directory into an existing cluster, run:
@@ -52,10 +55,55 @@ The following varaiables are used by the Docker image to perform various operati
 |SCHEDULE_HOUR|0|schedule-task|Hour (UTC) to run the job daily.  Use CRON_EXPRESSION if you want to customize further.|
 |CRON_EXPRESSION|cron(0 0 * * ? *)|schedule-task|CRON Expression for ECS Task - Default: Daily at midnight UTC|
 
-## Future Development
-CodeDeploy and Blue/Green deployments are under development.
+## Scheduling Tasks
+In order to use the `schedule-task` feature, you will need to create the `ecsEventsRole` role.  Run the following command:
+```
+docker run \
+    --env AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+    --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+    --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+    smithmicro/ecs:latest create-roles
+```
 
-### CodeDeploy Roles
-You must follow these directions to support CodeDeploy.
-This feature is in development
-https://docs.aws.amazon.com/AmazonECS/latest/developerguide/codedeploy_IAM_role.html
+## SSM Parameter Store support
+This image supports setting secrets in a ecs-param.yml file in the same format supported by ecs-cli.  There are only two steps:
+
+1. Create the requried ecsTaskExecutionRole Role to support Parameter Store, ECR and CLoudWatch access.
+```
+docker run \
+    --env AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+    --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+    --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+    smithmicro/ecs:latest create-roles
+```
+2. Create a `ecs-parans.yml` file in the same directory as `docker-compose.yml`:
+```
+version: 1
+task_definition:
+  task_execution_role: ecsTaskExecutionRole
+  services:
+    paramstore-test:
+      secrets:
+        - value_from: NAME_OF_SECRET_IN_PARAMETER_STORE
+          name: NAME_OF_SECRET_IN_CONTAINER
+        - value_from: MY_APP_PGPASSWORD
+          name: PGPASSWORD
+```
+The next time you run `update`, this file will be picked up and used automatically.
+
+## ECR Login Example
+You can use the ecs-cli command directly to issue log into AWS ECS, but if you don't want the dependencies of the ecs-cli, you can also this operation with smithmicro/ecs.
+
+Example:
+```
+ECR_PASSWORD=$(docker run \
+    --env AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+    --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+    --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+    smithmicro/ecs:latest get-login-password)
+
+ACCOUNT_ID=<your account>
+
+echo -n $ECR_PASSWORD | docker login -u AWS --password-stdin https://$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
+```
