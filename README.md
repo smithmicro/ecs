@@ -51,7 +51,7 @@ The following varaiables are used by the Docker image to perform various operati
 |CLUSTER||create-elb, create-cluster, schedule-task, up(any), down|Name that appears in ECS Console|
 |COMPOSE|docker-compose.yml|schedule-task, up, update, up-elb, update-elb||
 |TARGET_GROUP_ARN||up-elb, update-elb||
-|CONTAINER_PORT|8080|up-elb, update-elb|Port inside the Container to connect to ELB|
+|CONTAINER_PORT||up-elb, update-elb|Port inside the Container to connect to ELB|
 |SCHEDULE_HOUR|0|schedule-task|Hour (UTC) to run the job daily.  Use CRON_EXPRESSION if you want to customize further.|
 |CRON_EXPRESSION|cron(0 0 * * ? *)|schedule-task|CRON Expression for ECS Task - Default: Daily at midnight UTC|
 

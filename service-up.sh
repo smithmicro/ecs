@@ -55,9 +55,9 @@ if [ "$1" = 'up-elb' ]; then
     echo "Please set veriable CONTAINER_NAME"
     exit 12
   fi
-  # check all optional variables
   if [ "$CONTAINER_PORT" == '' ]; then
-    CONTAINER_PORT=8080
+    echo "Please set veriable CONTAINER_PORT"
+    exit 13
   fi
 
   # Start the service
@@ -75,9 +75,9 @@ if [ "$1" = 'update-elb' ]; then
     echo "Please set veriable CONTAINER_NAME"
     exit 12
   fi
-  # check all optional variables
   if [ "$CONTAINER_PORT" == '' ]; then
-    CONTAINER_PORT=8080
+    echo "Please set veriable CONTAINER_PORT"
+    exit 13
   fi
 
   # Stop the service
