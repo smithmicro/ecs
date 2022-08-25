@@ -108,7 +108,7 @@ echo -n $ECR_PASSWORD | docker login -u AWS --password-stdin https://$ACCOUNT_ID
 
 ```
 ## Using AWS Assumed Role instead of normal IAM credentials
-You can use the `aws sts assume-role` to utilize AWS assigned roles.  This allows for using centralized AWS account management and doesn't rely on AWS IAM accounts.
+You can use the `aws sts assume-role` along with `jq` to utilize AWS assigned roles.  This allows for using centralized AWS account management and doesn't rely on AWS IAM accounts.
 
 If your assigned cross account role is `arn:aws:iam::0123456789:role/AdminCrossAccount`, you can run the rollowing commands:
 ```
@@ -125,3 +125,5 @@ docker run \
     --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
     --env AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
     smithmicro/ecs:latest create-cluster
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+```
