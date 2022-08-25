@@ -110,6 +110,9 @@ echo -n $ECR_PASSWORD | docker login -u AWS --password-stdin https://$ACCOUNT_ID
 ## Using AWS Assumed Role instead of normal IAM credentials
 You can use the `aws sts assume-role` along with `jq` to utilize AWS assigned roles.  This allows for using centralized AWS account management and doesn't rely on AWS IAM accounts.
 
+Adding Cross Account Roles:
+https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html
+
 If your assigned cross account role is `arn:aws:iam::0123456789:role/AdminCrossAccount`, you can run the rollowing commands:
 ```
 AWS_DATA=$(aws sts assume-role --role-arn arn:aws:iam::0123456789:role/AdminCrossAccount  --role-session-name=ecs-deployer | jq '.Credentials')
