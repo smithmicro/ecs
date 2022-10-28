@@ -16,6 +16,13 @@
                             ],
                             "Resource": [
                                 "arn:aws:ssm:*:*:parameter/*"
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "kms:Decrypt"
+                                    ],
+                                    "Resource": "arn:aws:kms:*:*:key/*"
+                                }
                             ]
                         }
                     ]
